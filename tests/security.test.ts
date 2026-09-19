@@ -72,4 +72,18 @@ describe("prompt-injection containment", () => {
     expect(chats.every((c) => !("tools" in (c.body ?? {})))).toBe(true); // an injected instruction has nothing to call
     vi.unstubAllEnvs();
   });
+
+  it("keeps streaming past upstream frames that carry no content (reasoning models)", async () => {
+    vi.stubEnv("OPENROUTER_API_KEY", "test-key");
+    const frames = ['data: {"choices":[{"delta":{"reasoning":"thinking"}}]}\n\n', ": keep-alive\n\n", 'data: {"choices":[{"delta":{"content":"It adds [1]."}}]}\n\n', "data: [DONE]\n\n"];
+    const fakeFetch = (async (url: string) => {
+      if (url.endsWith("/models")) return Response.json({ data: [{ id: "a/one:free" }] });
+      const enc = new TextEncoder();
+      return new Response(new ReadableStream({ pull: (c) => (frames.length ? c.enqueue(enc.encode(frames.shift()!)) : c.close()) }), { status: 200 });
+    }) as unknown as typeof fetch;
+
+    const text = await Promise.race([new Response(await streamAnswer("what does f do?", [hit("const f = 1")], fakeFetch)).text(), new Promise<string>((r) => setTimeout(() => r("STALLED"), 1000))]);
+    expect(text).toBe("It adds [1].");
+    vi.unstubAllEnvs();
+  });
 });
