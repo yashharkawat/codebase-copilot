@@ -1,0 +1,18 @@
+{
+  "id": "portfolio",
+  "name": "portfolio",
+  "source": "local",
+  "commit": "28a26cf0e23734e3217fbc280b8be7f4732f1a87",
+  "chunker": "ast",
+  "model": "Xenova/bge-small-en-v1.5",
+  "dim": 384,
+  "chunkCount": 70,
+  "fileCount": 32,
+  "languages": {
+    "javascript": 2,
+    "typescript": 7,
+    "md": 2,
+    "tsx": 21
+  },
+  "createdAt": "2026-09-19T14:26:54.923Z"
+}
