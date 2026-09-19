@@ -1,0 +1,706 @@
+{
+  "repo": "honojs/hono",
+  "commit": "098e11912ab244c5c33931de007f04dc8e3c2929",
+  "questions": [
+    {
+      "id": "q01",
+      "category": "semantic",
+      "question": "Where is the logic that tries several routing strategies in turn on the first request and then permanently locks in the first one that can handle all registered paths?",
+      "reference_answer": "SmartRouter.match replays all buffered routes into each candidate router in order, skipping any that throw UnsupportedPathError; the first that succeeds is bound as this.match, the route buffer is dropped and the name is updated to include the chosen router.",
+      "gold": [
+        {
+          "file": "src/router/smart-router/router.ts",
+          "symbol": "match",
+          "startLine": 21,
+          "endLine": 61
+        }
+      ]
+    },
+    {
+      "id": "q02",
+      "category": "semantic",
+      "question": "In the tree-based router, where is a request path walked segment by segment, collecting handlers from static children, wildcard nodes and parameter nodes, and finally ordered by when they were registered?",
+      "reference_answer": "Node.search in the trie router splits the path, walks current nodes per segment, matches static children, '*' wildcards and (optionally regex-constrained) params while accumulating params, then sorts the collected handler sets by score and returns [handler, params] pairs.",
+      "gold": [
+        {
+          "file": "src/router/trie-router/node.ts",
+          "symbol": "search",
+          "startLine": 86,
+          "endLine": 216
+        }
+      ]
+    },
+    {
+      "id": "q03",
+      "category": "lexical",
+      "question": "Where does the TrieRouter Node record `possibleKeys` and an incrementing `score` for a handler when a route is inserted?",
+      "reference_answer": "Node.insert splits the routing path, creates/reuses child nodes per segment (registering pattern children), collects param names into possibleKeys and pushes a method entry with the handler, possibleKeys and score: ++order.",
+      "gold": [
+        {
+          "file": "src/router/trie-router/node.ts",
+          "symbol": "insert",
+          "startLine": 28,
+          "endLine": 62
+        }
+      ]
+    },
+    {
+      "id": "q04",
+      "category": "lexical",
+      "question": "Where does RegExpRouter build the per-method matcher tuple of [regexp, handlerData, staticMap] from its tries?",
+      "reference_answer": "RegExpRouter.#buildMatcher calls trie.buildRegExp() for the method, puts paths absent from the trie into a static map, and maps each dynamic path's handlers to param-index maps, returning [regexp, handler data indexed by capture position, staticMap].",
+      "gold": [
+        {
+          "file": "src/router/reg-exp-router/router.ts",
+          "symbol": "#buildMatcher",
+          "startLine": 145,
+          "endLine": 173
+        }
+      ]
+    },
+    {
+      "id": "q05",
+      "category": "semantic",
+      "question": "Where does the regex-based router postpone compiling its matchers until the first lookup and then swap its own lookup function for the compiled fast path?",
+      "reference_answer": "The shared match function in reg-exp-router/matcher.ts calls buildAllMatchers() on first use, defines an inner closure that checks the static map then runs the single regexp and finds the handler index via match.indexOf('', 1), assigns it to this.match and invokes it.",
+      "gold": [
+        {
+          "file": "src/router/reg-exp-router/matcher.ts",
+          "symbol": "match",
+          "startLine": 10,
+          "endLine": 33
+        }
+      ]
+    },
+    {
+      "id": "q06",
+      "category": "semantic",
+      "question": "Which routing implementation does no precompilation at all and simply loops over every registered route on each request, comparing path pieces with string index operations?",
+      "reference_answer": "LinearRouter.match iterates all routes, handling static paths by equality, star-only paths by indexOf on the split parts, and labelled paths by scanning for '/' and optional inline regex constraints; it throws UnsupportedPathError when a route mixes labels and stars.",
+      "gold": [
+        {
+          "file": "src/router/linear-router/router.ts",
+          "symbol": "match",
+          "startLine": 25,
+          "endLine": 150
+        }
+      ]
+    },
+    {
+      "id": "q07",
+      "category": "semantic",
+      "question": "Where is a route path such as /users/:id{[0-9]+} translated at registration time into one regular expression that uses named capture groups for the parameters?",
+      "reference_answer": "PatternRouter.add computes a suffix for trailing wildcards, recursively registers the shorter path for an optional trailing param, converts each ':name{pattern}' segment into '(?<name>pattern)' and pushes [RegExp, method, handler], throwing UnsupportedPathError if the regexp is invalid.",
+      "gold": [
+        {
+          "file": "src/router/pattern-router/router.ts",
+          "symbol": "add",
+          "startLine": 12,
+          "endLine": 36
+        }
+      ]
+    },
+    {
+      "id": "q08",
+      "category": "lexical",
+      "question": "Where is the 'next() called multiple times' error thrown, i.e. where is the middleware chain dispatched in compose?",
+      "reference_answer": "compose returns a function whose inner dispatch(i) guards against repeated next() calls, runs middleware[i] with a next that dispatches i+1, routes thrown Errors to onError, calls onNotFound when no handler remains and the context is not finalized, and stores the result on context.res.",
+      "gold": [
+        {
+          "file": "src/compose.ts",
+          "symbol": "compose",
+          "startLine": 15,
+          "endLine": 73
+        }
+      ]
+    },
+    {
+      "id": "q09",
+      "category": "semantic",
+      "question": "When a middleware replaces the response after one has already been set, where are the previous response's headers (including multiple Set-Cookie values) carried over onto the new response?",
+      "reference_answer": "The Context `set res` accessor clones the new response, copies every header from the existing response except content-type, re-appends each set-cookie value individually, then stores it and marks the context finalized.",
+      "gold": [
+        {
+          "file": "src/context.ts",
+          "symbol": "set res",
+          "startLine": 414,
+          "endLine": 434
+        }
+      ]
+    },
+    {
+      "id": "q10",
+      "category": "lexical",
+      "question": "Where is Context's private #newResponse that merges prepared headers, the status set via c.status() and per-call headers into a Response?",
+      "reference_answer": "Context.#newResponse starts from the existing response headers or prepared headers, merges headers from a ResponseInit (appending set-cookie), applies the headers record (arrays are appended), resolves status from the argument or #status, and calls createResponseInstance.",
+      "gold": [
+        {
+          "file": "src/context.ts",
+          "symbol": "#newResponse",
+          "startLine": 608,
+          "endLine": 656
+        }
+      ]
+    },
+    {
+      "id": "q11",
+      "category": "semantic",
+      "question": "If a request body was already read in one format (for example JSON) and is later asked for in another (for example text), where is the earlier result reused and converted instead of re-reading the stream?",
+      "reference_answer": "HonoRequest.#cachedBody returns the cached promise for the requested key, otherwise takes any other cached body, re-stringifies it if it was JSON, wraps it in a new Response (keeping content-type unless it was formData) and reads it in the requested format; with no cache it reads raw[key]() and caches it.",
+      "gold": [
+        {
+          "file": "src/request.ts",
+          "symbol": "#cachedBody",
+          "startLine": 217,
+          "endLine": 244
+        }
+      ]
+    },
+    {
+      "id": "q12",
+      "category": "lexical",
+      "question": "What does cloneRawRequest do when the raw request body has already been consumed?",
+      "reference_answer": "cloneRawRequest clones req.raw if the body is unused; otherwise it rebuilds a Request from the first cached body (re-stringifying JSON, dropping content-length/content-type as needed) plus the original request options, and throws HTTPException 500 if nothing was cached.",
+      "gold": [
+        {
+          "file": "src/request.ts",
+          "symbol": "cloneRawRequest",
+          "startLine": 481,
+          "endLine": 520
+        }
+      ]
+    },
+    {
+      "id": "q13",
+      "category": "semantic",
+      "question": "Where does the application take an incoming Request, look up the matching handlers, create the per-request context, run them (with a fast path for a single handler), and treat HEAD as a body-less GET?",
+      "reference_answer": "Hono#dispatch re-dispatches HEAD as GET with a null body, computes the path, calls router.match, builds a Context, invokes a lone handler directly (falling back to the not-found handler), or otherwise runs compose() and throws if the context was never finalized, sending errors to #handleError.",
+      "gold": [
+        {
+          "file": "src/hono-base.ts",
+          "symbol": "#dispatch",
+          "startLine": 408,
+          "endLine": 468
+        }
+      ]
+    },
+    {
+      "id": "q14",
+      "category": "lexical",
+      "question": "How does app.mount() rewrite the request URL before passing it to the mounted application handler?",
+      "reference_answer": "Hono.mount resolves optionHandler/replaceRequest options, defaults replaceRequest to stripping the merged base path prefix from the pathname, defaults the extra args to [c.env, executionCtx], and registers an ALL handler on path/* that calls the application handler and falls through to next() if it returns nothing.",
+      "gold": [
+        {
+          "file": "src/hono-base.ts",
+          "symbol": "mount",
+          "startLine": 331,
+          "endLine": 386
+        }
+      ]
+    },
+    {
+      "id": "q15",
+      "category": "semantic",
+      "question": "When one application is attached under a path prefix of another, where are the child's handlers wrapped so that the child's own custom error handler still applies to them?",
+      "reference_answer": "Hono.route creates a base-path clone, and for each route of the child app either reuses the handler (default error handler) or wraps it in compose([], app.errorHandler) tagging the original via COMPOSED_HANDLER, then adds it with #addRoute.",
+      "gold": [
+        {
+          "file": "src/hono-base.ts",
+          "symbol": "route",
+          "startLine": 211,
+          "endLine": 235
+        }
+      ]
+    },
+    {
+      "id": "q16",
+      "category": "lexical",
+      "question": "What does HTTPException.getResponse() return when a custom `res` option was supplied versus when it was not?",
+      "reference_answer": "getResponse returns a new Response using the supplied res body and headers but the exception's status if res exists; otherwise it returns a Response with the exception message and status.",
+      "gold": [
+        {
+          "file": "src/http-exception.ts",
+          "symbol": "getResponse",
+          "startLine": 66,
+          "endLine": 77
+        }
+      ]
+    },
+    {
+      "id": "q17",
+      "category": "semantic",
+      "question": "Where is an incoming request's payload size enforced, reading the stream chunk by chunk when Content-Length can't be trusted, and answering 413 when it is too large?",
+      "reference_answer": "bodyLimit skips requests without a body, compares Content-Length to maxSize when present without Transfer-Encoding, otherwise reads the body reader accumulating size and calling onError (default 413 HTTPException) on overflow, then rebuilds c.req.raw with the buffered chunks.",
+      "gold": [
+        {
+          "file": "src/middleware/body-limit/index.ts",
+          "symbol": "bodyLimit",
+          "startLine": 50,
+          "endLine": 111
+        }
+      ]
+    },
+    {
+      "id": "q18",
+      "category": "semantic",
+      "question": "Where are browser preflight OPTIONS requests answered directly with a 204 and the Access-Control-Allow-* headers?",
+      "reference_answer": "The cors middleware resolves the allowed origin, sets credentials/expose headers, and for OPTIONS sets max-age, allow-methods and allow-headers (echoing Access-Control-Request-Headers if none configured), removes content headers and returns a 204; otherwise it calls next and appends Vary: Origin when origin is not '*'.",
+      "gold": [
+        {
+          "file": "src/middleware/cors/index.ts",
+          "symbol": "cors",
+          "startLine": 63,
+          "endLine": 164
+        }
+      ]
+    },
+    {
+      "id": "q19",
+      "category": "semantic",
+      "question": "Where are state-changing, form-style requests rejected with a 403 unless their Origin or Sec-Fetch-Site header is acceptable?",
+      "reference_answer": "The csrf middleware builds origin and sec-fetch-site predicates from options and, for non-GET/HEAD requests whose content-type is a form type, throws HTTPException 403 when neither the Sec-Fetch-Site nor the Origin check passes.",
+      "gold": [
+        {
+          "file": "src/middleware/csrf/index.ts",
+          "symbol": "csrf",
+          "startLine": 94,
+          "endLine": 151
+        }
+      ]
+    },
+    {
+      "id": "q20",
+      "category": "semantic",
+      "question": "Where is a 304 Not Modified produced when the client's If-None-Match value matches a hash of the response body?",
+      "reference_answer": "The etag middleware runs after next(), for successful GET/HEAD/QUERY responses it reuses an existing ETag or hashes the cloned body (SHA-1 by default, optionally weak), and if it matches If-None-Match replaces the response with a 304 keeping only retained headers, else sets the ETag header.",
+      "gold": [
+        {
+          "file": "src/middleware/etag/index.ts",
+          "symbol": "etag",
+          "startLine": 80,
+          "endLine": 134
+        }
+      ]
+    },
+    {
+      "id": "q21",
+      "category": "semantic",
+      "question": "Where is the downstream handler raced against a timer so that slow requests are rejected with an error after a given number of milliseconds?",
+      "reference_answer": "The timeout middleware creates a promise that rejects with the configured HTTPException (or the result of the exception factory) after `duration` ms, awaits Promise.race([next(), timeoutPromise]) and clears the timer in finally.",
+      "gold": [
+        {
+          "file": "src/middleware/timeout/index.ts",
+          "symbol": "timeout",
+          "startLine": 38,
+          "endLine": 58
+        }
+      ]
+    },
+    {
+      "id": "q22",
+      "category": "lexical",
+      "question": "How does basicAuth compare the supplied username/password with configured users, and what does it respond with on failure?",
+      "reference_answer": "basicAuth parses credentials with auth(), uses verifyUser if provided or timingSafeEqual on username and password for each configured user, calls onAuthSuccess and next on success, and otherwise throws HTTPException 401 with a WWW-Authenticate Basic realm header and a string or JSON invalidUserMessage.",
+      "gold": [
+        {
+          "file": "src/middleware/basic-auth/index.ts",
+          "symbol": "basicAuth",
+          "startLine": 80,
+          "endLine": 153
+        }
+      ]
+    },
+    {
+      "id": "q23",
+      "category": "semantic",
+      "question": "Where is the response compression algorithm chosen from the quality values in the client's Accept-Encoding header, including wildcard handling?",
+      "reference_answer": "selectEncoding parses the header with parseAccept, and for each candidate encoding uses its explicit q or the '*' q, returning immediately on q=1 and otherwise the candidate with the highest positive q (undefined if none or no header).",
+      "gold": [
+        {
+          "file": "src/middleware/compress/index.ts",
+          "symbol": "selectEncoding",
+          "startLine": 24,
+          "endLine": 44
+        }
+      ]
+    },
+    {
+      "id": "q24",
+      "category": "lexical",
+      "question": "How does the `some` combinator in the combine middleware decide which middleware succeeded and when to rethrow the last error?",
+      "reference_answer": "some runs each middleware in order with a wrapped next; a result of true calls next, false records 'No successful middleware found' and continues, a throw records the error and stops only if next had already been called; the first success clears the error, and any remaining lastError is thrown.",
+      "gold": [
+        {
+          "file": "src/middleware/combine/index.ts",
+          "symbol": "some",
+          "startLine": 38,
+          "endLine": 69
+        }
+      ]
+    },
+    {
+      "id": "q25",
+      "category": "semantic",
+      "question": "Where does a GET request that 404s on a URL ending in '/' get a 301 redirect to the same URL without the final slash?",
+      "reference_answer": "trimTrailingSlash redirects immediately when alwaysRedirect is set, otherwise awaits next() and, if the response is 404 for a GET/HEAD path other than '/' ending in '/', sets c.res to a 301 redirect to the pathname with the last character removed.",
+      "gold": [
+        {
+          "file": "src/middleware/trailing-slash/index.ts",
+          "symbol": "trimTrailingSlash",
+          "startLine": 44,
+          "endLine": 74
+        }
+      ]
+    },
+    {
+      "id": "q26",
+      "category": "semantic",
+      "question": "Where are allow/deny address rules, including subnet ranges written in slash notation, compiled into bigint masks and a function that tests a remote address against them?",
+      "reference_answer": "buildMatcher in the IP restriction middleware sorts rules into static string/binary sets, CIDR [isIPv4, addr&mask, mask] tuples (normalising IPv4-mapped IPv6) and function rules, returning a predicate that checks exact matches, then masked comparisons, then function rules.",
+      "gold": [
+        {
+          "file": "src/middleware/ip-restriction/index.ts",
+          "symbol": "buildMatcher",
+          "startLine": 51,
+          "endLine": 167
+        }
+      ]
+    },
+    {
+      "id": "q27",
+      "category": "semantic",
+      "question": "Where can a POST be re-dispatched into the app as a different HTTP verb taken from a hidden form field, a header, or a query parameter?",
+      "reference_answer": "methodOverride skips GET, then depending on options reads the method from the form body (multipart or urlencoded, default field _method), a header, or a query param, strips that field and calls app.fetch with a new Request using the overriding method.",
+      "gold": [
+        {
+          "file": "src/middleware/method-override/index.ts",
+          "symbol": "methodOverride",
+          "startLine": 60,
+          "endLine": 138
+        }
+      ]
+    },
+    {
+      "id": "q28",
+      "category": "semantic",
+      "question": "Where does the static file middleware look for already-compressed variants of a file (such as .br or .gz) and serve them with the right Content-Encoding?",
+      "reference_answer": "The base serveStatic middleware decodes and sanity-checks the path, joins it to root, appends index.html for directories, loads content via getContent, sets the MIME type, and when `precompressed` is on tries each accepted encoding's extension, setting Content-Encoding and Vary before returning the body.",
+      "gold": [
+        {
+          "file": "src/middleware/serve-static/index.ts",
+          "symbol": "serveStatic",
+          "startLine": 35,
+          "endLine": 126
+        }
+      ]
+    },
+    {
+      "id": "q29",
+      "category": "lexical",
+      "question": "Where does secureHeaders turn the contentSecurityPolicy options object into a header string, including function-valued directives (getCSPDirectives)?",
+      "reference_answer": "getCSPDirectives iterates the policy entries, converts camelCase directive names to kebab-case, builds a flat values array, registers callbacks for function values at computed indices, and returns either a joined string or a callback that fills a clone of the values per request.",
+      "gold": [
+        {
+          "file": "src/middleware/secure-headers/secure-headers.ts",
+          "symbol": "getCSPDirectives",
+          "startLine": 246,
+          "endLine": 292
+        }
+      ]
+    },
+    {
+      "id": "q30",
+      "category": "lexical",
+      "question": "Where does the jwt middleware extract the Bearer token (header or cookie), verify it and set `jwtPayload` on the context?",
+      "reference_answer": "The jwt middleware validates options, reads the token from the Authorization (or custom) header requiring a 'Bearer <token>' shape, or from a plain/signed cookie, throws 401 HTTPExceptions with WWW-Authenticate details when missing or invalid, verifies with Jwt.verify and the configured alg, and sets c.set('jwtPayload', payload).",
+      "gold": [
+        {
+          "file": "src/middleware/jwt/jwt.ts",
+          "symbol": "jwt",
+          "startLine": 54,
+          "endLine": 163
+        }
+      ]
+    },
+    {
+      "id": "q31",
+      "category": "lexical",
+      "question": "Where is the Server-Timing header appended to the response by the timing middleware?",
+      "reference_answer": "The timing middleware stores a metric object on the context, starts/ends a 'total' timer around next(), auto-ends remaining timers, and if enabled appends the collected entries as Server-Timing plus an optional Timing-Allow-Origin header.",
+      "gold": [
+        {
+          "file": "src/middleware/timing/timing.ts",
+          "symbol": "timing",
+          "startLine": 76,
+          "endLine": 126
+        }
+      ]
+    },
+    {
+      "id": "q32",
+      "category": "lexical",
+      "question": "How does the `html` tagged template helper escape interpolated values and deal with promises or already-escaped strings?",
+      "reference_answer": "html concatenates the template strings into a buffer, flattening array values; strings are escaped via escapeToBuffer, numbers appended, booleans/null skipped, isEscaped objects and promises are appended or unshifted into the buffer, and the result is a raw string or a promise from stringBufferToString.",
+      "gold": [
+        {
+          "file": "src/helper/html/index.ts",
+          "symbol": "html",
+          "startLine": 11,
+          "endLine": 57
+        }
+      ]
+    },
+    {
+      "id": "q33",
+      "category": "semantic",
+      "question": "Where is a server-sent event message serialized into 'data:' lines with optional event, id and retry fields, refusing line breaks in the event name or id?",
+      "reference_answer": "SSEStreamingApi.writeSSE resolves the data, prefixes every line with 'data: ', throws if event or id contain CR/LF, joins event/data/id/retry lines followed by a blank line and writes it to the stream.",
+      "gold": [
+        {
+          "file": "src/helper/streaming/sse.ts",
+          "symbol": "writeSSE",
+          "startLine": 18,
+          "endLine": 45
+        }
+      ]
+    },
+    {
+      "id": "q34",
+      "category": "semantic",
+      "question": "During static site generation, where is an output file path checked to make sure it cannot escape the target directory?",
+      "reference_answer": "ensureWithinOutDir normalises both paths with joinPaths, compares path roots (UNC, drive, absolute, relative), and throws 'Path traversal detected' if the roots differ, the file path is not strictly under the out dir segments, or it climbs with '..'.",
+      "gold": [
+        {
+          "file": "src/helper/ssg/utils.ts",
+          "symbol": "ensureWithinOutDir",
+          "startLine": 100,
+          "endLine": 118
+        }
+      ]
+    },
+    {
+      "id": "q35",
+      "category": "semantic",
+      "question": "Where are connection-specific headers stripped from an upstream server's response, and content-encoding/content-length dropped, before it is handed back to the caller?",
+      "reference_answer": "The proxy helper builds the outgoing Request from the raw request and init, deletes accept-encoding, fetches, then removes headers named in Connection plus the hop-by-hop list and content-encoding/content-length from the response headers before returning a new Response.",
+      "gold": [
+        {
+          "file": "src/helper/proxy/index.ts",
+          "symbol": "proxy",
+          "startLine": 160,
+          "endLine": 202
+        }
+      ]
+    },
+    {
+      "id": "q36",
+      "category": "semantic",
+      "question": "Where does the code work out which JavaScript platform (Deno, Bun, Cloudflare Workers, Node, edge, Fastly) it is executing on by looking at the user agent and global objects?",
+      "reference_answer": "getRuntimeKey checks navigator.userAgent against the knownUserAgents prefixes, then falls back to globalThis.EdgeRuntime ('edge-light'), globalThis.fastly, process.release.name === 'node', and finally 'other'.",
+      "gold": [
+        {
+          "file": "src/helper/adapter/index.ts",
+          "symbol": "getRuntimeKey",
+          "startLine": 50,
+          "endLine": 84
+        }
+      ]
+    },
+    {
+      "id": "q37",
+      "category": "lexical",
+      "question": "How does defineWebSocketHelper support being called both as middleware (createEvents, options) and directly with (c, events, options)?",
+      "reference_answer": "defineWebSocketHelper returns a function that, when its first argument is a function, yields an upgradeWebSocket middleware which creates events and returns the handler's response or calls next; otherwise it calls the handler immediately and throws 'Failed to upgrade WebSocket' if nothing is returned.",
+      "gold": [
+        {
+          "file": "src/helper/websocket/index.ts",
+          "symbol": "defineWebSocketHelper",
+          "startLine": 111,
+          "endLine": 140
+        }
+      ]
+    },
+    {
+      "id": "q38",
+      "category": "semantic",
+      "question": "Where is the pathname pulled out of the raw request URL string without constructing a URL object, only doing percent-decoding when a '%' is actually encountered?",
+      "reference_answer": "getPath finds the first '/' after the scheme and scans char codes; on '%' it slices up to the query/hash and returns tryDecodeURI of it (protecting %25), and on '?' or '#' it stops and returns the plain slice.",
+      "gold": [
+        {
+          "file": "src/utils/url.ts",
+          "symbol": "getPath",
+          "startLine": 106,
+          "endLine": 134
+        }
+      ]
+    },
+    {
+      "id": "q39",
+      "category": "lexical",
+      "question": "What does checkOptionalParameter return for a path like /api/animals/:type?",
+      "reference_answer": "checkOptionalParameter returns null unless the path ends in '?' and has a ':' param; otherwise it walks the segments and returns the de-duplicated list of paths with and without each optional segment, e.g. ['/api/animals', '/api/animals/:type'].",
+      "gold": [
+        {
+          "file": "src/utils/url.ts",
+          "symbol": "checkOptionalParameter",
+          "startLine": 184,
+          "endLine": 219
+        }
+      ]
+    },
+    {
+      "id": "q40",
+      "category": "semantic",
+      "question": "Where is the limiter that caps how many async tasks run simultaneously, re-queuing a task with a timer when all slots are taken?",
+      "reference_answer": "createPool returns a run() that, when the active set is at the limit (default 1024), creates a deferred promise and retries via setTimeout; otherwise it adds a marker, awaits the task, frees the slot (optionally after an interval) and resolves the deferred promise. Infinity disables limiting.",
+      "gold": [
+        {
+          "file": "src/utils/concurrent.ts",
+          "symbol": "createPool",
+          "startLine": 12,
+          "endLine": 55
+        }
+      ]
+    },
+    {
+      "id": "q41",
+      "category": "semantic",
+      "question": "Where are a token's expiry, not-before, issued-at, issuer and audience claims checked before its signature is confirmed?",
+      "reference_answer": "verify in utils/jwt requires an algorithm, checks the token has three parts and a valid header whose alg matches, validates nbf/exp/iat against the current time, iss (string or RegExp) and aud, then verifies the signature over header.payload and returns the payload, throwing specific Jwt* errors on failure.",
+      "gold": [
+        {
+          "file": "src/utils/jwt/jwt.ts",
+          "symbol": "verify",
+          "startLine": 96,
+          "endLine": 188
+        }
+      ]
+    },
+    {
+      "id": "q42",
+      "category": "semantic",
+      "question": "How does the typed RPC client turn an arbitrary chain of property accesses into a list of path parts and then invoke a callback when the chain is finally called?",
+      "reference_answer": "createProxy returns a Proxy over a no-op function whose get trap recursively creates a new proxy with the key appended to the path (returning undefined for 'then' and non-strings) and whose apply trap calls the callback with { path, args }.",
+      "gold": [
+        {
+          "file": "src/client/client.ts",
+          "symbol": "createProxy",
+          "startLine": 15,
+          "endLine": 31
+        }
+      ]
+    },
+    {
+      "id": "q43",
+      "category": "lexical",
+      "question": "Where does `hc` handle the special `$url`, `$path` and `$ws` members of the client?",
+      "reference_answer": "hc's proxy callback strips the leading '$' from the last path part to get the method, merges the base URL and path, returns a URL/path string (with params and query substituted) for url/path, opens a WebSocket with the ws protocol for ws, and otherwise builds a ClientRequestImpl and calls fetch with merged options and headers.",
+      "gold": [
+        {
+          "file": "src/client/client.ts",
+          "symbol": "hc",
+          "startLine": 151,
+          "endLine": 249
+        }
+      ]
+    },
+    {
+      "id": "q44",
+      "category": "semantic",
+      "question": "Where is incoming request data gathered for a chosen source (JSON body, form, query string, path params, headers or cookies) and handed to a user-supplied checking function before the handler runs?",
+      "reference_answer": "validator returns middleware that reads the value per target (JSON only with a JSON content-type, form via cached/ parsed FormData, queries, params, headers, cookies), throws 400 on malformed JSON/FormData, calls the validation function, returns its Response if any, otherwise stores the result with addValidatedData and calls next.",
+      "gold": [
+        {
+          "file": "src/validator/validator.ts",
+          "symbol": "validator",
+          "startLine": 46,
+          "endLine": 172
+        }
+      ]
+    },
+    {
+      "id": "q45",
+      "category": "lexical",
+      "question": "How is `memo` implemented for JSX components and what comparison function does it use by default?",
+      "reference_answer": "memo wraps the component in a function, attaches the propsAreEqual function (defaulting to shallowEqual) under the DOM_MEMO symbol and the original component under DOM_RENDERER, and returns the wrapper.",
+      "gold": [
+        {
+          "file": "src/jsx/base.ts",
+          "symbol": "memo",
+          "startLine": 437,
+          "endLine": 450
+        }
+      ]
+    },
+    {
+      "id": "q46",
+      "category": "lexical",
+      "question": "How does renderToReadableStream stream JSX content and later-resolving Suspense callbacks into a ReadableStream?",
+      "reference_answer": "renderToReadableStream stringifies the JSX node, resolves BeforeStream callbacks and enqueues the initial HTML, then recursively chains each Stream-phase callback promise, enqueuing resolved chunks (errors go to onError), waits until all callbacks are resolved and closes the controller unless cancelled.",
+      "gold": [
+        {
+          "file": "src/jsx/streaming.ts",
+          "symbol": "renderToReadableStream",
+          "startLine": 157,
+          "endLine": 231
+        }
+      ]
+    },
+    {
+      "id": "q47",
+      "category": "semantic",
+      "question": "Where are numeric inline-style values given a 'px' suffix and camelCase CSS property names converted to kebab-case when rendering JSX?",
+      "reference_answer": "styleObjectForEach iterates the style object, kebab-cases camelCase keys (leaving CSS variables), skips invalid property names and unsafe string values, appends 'px' to numbers except for unitless properties matched by a regex, and calls fn(key, value) (null for nullish).",
+      "gold": [
+        {
+          "file": "src/jsx/utils.ts",
+          "symbol": "styleObjectForEach",
+          "startLine": 169,
+          "endLine": 202
+        }
+      ]
+    },
+    {
+      "id": "q48",
+      "category": "semantic",
+      "question": "When an AWS Lambda invocation arrives, where is it decided whether the event came from an Application Load Balancer, API Gateway v1 or v2, or VPC Lattice?",
+      "reference_answer": "getProcessor checks the event with isProxyEventALB (requestContext.elb), isProxyEventV2 (rawPath + requestContext.http) and isLatticeEventV2 (requestContext.serviceArn) and returns the matching processor singleton, defaulting to the API Gateway v1 processor.",
+      "gold": [
+        {
+          "file": "src/adapter/aws-lambda/handler.ts",
+          "symbol": "getProcessor",
+          "startLine": 629,
+          "endLine": 641
+        }
+      ]
+    },
+    {
+      "id": "q49",
+      "category": "lexical",
+      "question": "Where does the Lambda@Edge adapter build a Request from a CloudFrontEdgeEvent (createRequest)?",
+      "reference_answer": "createRequest builds an https URL from the host header (or distribution domain), uri and querystring, copies all CloudFront headers, creates the body via createBody (base64-decoded when needed, none for GET/HEAD), sets content-length from the byte length and returns a new Request.",
+      "gold": [
+        {
+          "file": "src/adapter/lambda-edge/handler.ts",
+          "symbol": "createRequest",
+          "startLine": 164,
+          "endLine": 196
+        }
+      ]
+    },
+    {
+      "id": "q50",
+      "category": "lexical",
+      "question": "How does getContentFromKVAsset resolve a path using __STATIC_CONTENT_MANIFEST and the KV namespace?",
+      "reference_answer": "getContentFromKVAsset takes the manifest from options or the __STATIC_CONTENT_MANIFEST global (parsing JSON strings), the namespace from options or __STATIC_CONTENT, looks up the hashed key for the path and returns the KV value as a stream, or null if the key or content is missing.",
+      "gold": [
+        {
+          "file": "src/adapter/cloudflare-workers/utils.ts",
+          "symbol": "getContentFromKVAsset",
+          "startLine": 11,
+          "endLine": 50
+        }
+      ]
+    }
+  ]
+}

@@ -39,3 +39,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# codebase-copilot
+/data/
+/.cache/
+/models/
+/dist/
+/eval/.indexes/
+.env*
+!.env.example

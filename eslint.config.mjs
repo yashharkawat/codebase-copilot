@@ -12,6 +12,11 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Cloned evaluation corpus, caches and build output are not our code:
+    "data/**",
+    ".cache/**",
+    "models/**",
+    "dist/**",
   ]),
 ]);
 

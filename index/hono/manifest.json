@@ -1,0 +1,15 @@
+{
+  "id": "hono",
+  "name": "honojs/hono",
+  "source": "https://github.com/honojs/hono",
+  "commit": "098e11912ab244c5c33931de007f04dc8e3c2929",
+  "chunker": "ast",
+  "model": "Xenova/bge-small-en-v1.5",
+  "dim": 384,
+  "chunkCount": 1127,
+  "fileCount": 187,
+  "languages": {
+    "typescript": 187
+  },
+  "createdAt": "2026-09-19T12:18:58.011Z"
+}

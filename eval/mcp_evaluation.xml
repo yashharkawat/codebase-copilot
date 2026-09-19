@@ -1,0 +1,49 @@
+<!--
+  Agent-level evaluation (mcp-builder phase 4): can an LLM that has ONLY the copilot_* tools answer these?
+  Read-only, independent, stable at honojs/hono@098e119, each verifiable by string comparison.
+  Run with the mcp-builder harness:
+    python evaluation.py -t stdio -c npx -a tsx cli/main.ts serve eval/mcp_evaluation.xml
+  Answers were verified against the index with the project's own retrieval functions.
+-->
+<evaluation>
+  <qa_pair>
+    <question>In the indexed hono repo, a utility limits how many async tasks run at once. What numeric concurrency does it fall back to when the caller passes none?</question>
+    <answer>1024</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>During static site generation, one function guards against output paths escaping the target directory. Which other file (repo-relative path) calls that function?</question>
+    <answer>src/helper/ssg/ssg.ts</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>How many whole-word references to the identifier HTTPException exist in the indexed hono source, counting one per line?</question>
+    <answer>36</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>Across how many distinct files is the identifier HTTPException referenced in the indexed hono source?</question>
+    <answer>13</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>The router that tries several routing strategies and locks in the first that works throws an error if asked for its active router too early. What is the exact error message?</question>
+    <answer>No active router has been determined yet.</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>Which function verifies the signature of signed cookies, and in which file is it defined? Answer as path:functionName.</question>
+    <answer>src/utils/cookie.ts:parseSigned</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>How many times does the cookie helper (not the utils module) call the signed-cookie parsing function?</question>
+    <answer>2</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>On which line does the definition of the class PatternRouter start in the indexed hono repo?</question>
+    <answer>8</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>What is the repo-relative path of the file that implements the middleware rejecting request bodies above a configured size?</question>
+    <answer>src/middleware/body-limit/index.ts</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>What embedding model was the hono index built with, according to the server?</question>
+    <answer>Xenova/bge-small-en-v1.5</answer>
+  </qa_pair>
+</evaluation>
