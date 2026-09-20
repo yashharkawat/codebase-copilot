@@ -1,9 +1,10 @@
 import EvalTable from "./components/EvalTable";
 import Playground from "./components/Playground";
+import ThemeToggle from "./components/ThemeToggle";
 import results from "@/eval/results.json";
 
 const REPO_URL = "https://github.com/yashharkawat/codebase-copilot";
-const SITE = "https://codebase-copilot-omega.vercel.app";
+const SITE = "https://codebase-copilot.zojoofficial.com";
 
 const TOOLS = [
   ["copilot_search_code", "Hybrid semantic + keyword search. Returns symbol-level chunks with file:line citations."],
@@ -27,7 +28,10 @@ export default function Home() {
   return (
     <main className="mx-auto w-full max-w-5xl px-5 py-12 sm:py-16">
       <header>
-        <p className="font-mono text-sm text-accent">MCP server · RAG · TypeScript</p>
+        <div className="flex items-center justify-between gap-4">
+          <p className="font-mono text-sm text-accent">MCP server · RAG · TypeScript</p>
+          <ThemeToggle />
+        </div>
         <h1 className="mt-3 text-4xl font-semibold tracking-tight text-white sm:text-5xl">Codebase Copilot</h1>
         <p className="mt-4 max-w-3xl text-lg leading-8 text-gray-300">
           Gives Claude Code, Cursor and Claude Desktop real code search over any repository: syntax-aware chunking, local embeddings, hybrid

@@ -2,7 +2,7 @@
 
 **An MCP server that gives Claude Code, Cursor and Claude Desktop real code search over any repository** — syntax-aware chunking, local embeddings, hybrid retrieval, and a measured answer to "is this actually better than naive RAG?"
 
-**Live demo:** https://codebase-copilot-omega.vercel.app · **Remote MCP endpoint:** `https://codebase-copilot-omega.vercel.app/api/mcp`
+**Live demo:** https://codebase-copilot.zojoofficial.com · **Remote MCP endpoint:** `https://codebase-copilot.zojoofficial.com/api/mcp`
 
 | | Naive RAG baseline | This project |
 |---|---:|---:|
@@ -69,7 +69,7 @@ npm run cli -- search myrepo "where are sessions invalidated?"
 claude mcp add codebase-copilot -- npx tsx "$PWD/cli/main.ts" serve
 
 # Or use the hosted demo over HTTP (searches honojs/hono)
-claude mcp add --transport http codebase-copilot https://codebase-copilot-omega.vercel.app/api/mcp
+claude mcp add --transport http codebase-copilot https://codebase-copilot.zojoofficial.com/api/mcp
 ```
 
 Cursor / Claude Desktop (`mcp.json`):
